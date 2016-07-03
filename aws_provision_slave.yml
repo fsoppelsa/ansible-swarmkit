@@ -1,0 +1,55 @@
+---
+- name: Provision a Swarmkit slave on Amazon EC2
+  hosts: localhost
+  connection: local
+  gather_facts: False
+
+  tasks:
+    - shell: uuidgen
+      register: uuid
+
+    - set_fact:
+        machine_uuid: "{{uuid.stdout[0:8]}}"
+
+    - name: Provision a slave host on EC2
+      shell: >
+        docker-machine create -d amazonec2 swarmkit-"{{machine_uuid}}"
+
+    - shell: >
+        echo "swarmkit-{{machine_uuid}}" >> ~/.swarmkit_hosts
+
+    - name: Get machine variables
+      shell: >
+          eval $(docker-machine env swarmkit-"{{machine_uuid}}")
+          echo $DOCKER_TLS_VERIFY &&
+          echo $DOCKER_HOST &&
+          echo $DOCKER_CERT_PATH &&
+          echo $DOCKER_MACHINE_NAME
+      register: slave
+
+    - name: Get the master IP
+      shell: >
+          docker-machine ip swarmkit-master
+      register:
+          master
+
+    - name: Set variables
+      set_fact:
+        masterip: "{{ master.stdout }}"
+        shost: "{{ slave.stdout_lines[0] }}"
+        scert: "{{ slave.stdout_lines[1] }}"
+        smach: "{{ slave.stdout_lines[2] }}"
+
+    - name: Join the slave to the Swarmkit cluster
+      docker:
+        name: "{{machine_uuid}}"
+        image: "fsoppelsa/swarmkit"
+        command: swarmd --join-addr "{{ masterip }}":4242
+        volumes:
+          - "/var/run/docker.sock:/var/run/docker.sock"
+        detach: yes
+        docker_url: "{{ shost }}"
+        use_tls: encrypt
+        tls_ca_cert: "{{ scert }}/ca.pem"
+        tls_client_cert: "{{ scert }}/cert.pem"
+        tls_client_key: "{{ scert }}/key.pem"

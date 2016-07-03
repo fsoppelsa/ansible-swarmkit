@@ -1,0 +1,41 @@
+---
+- name: Provision a Swarmkit master on Amazon EC2
+  hosts: localhost
+  connection: local
+  gather_facts: False
+
+  tasks:
+    - name: Provision the master host on EC2
+      shell: >
+          docker-machine create -d amazonec2 swarmkit-master
+
+    - shell: >
+          eval $(docker-machine env swarmkit-master)
+          echo $DOCKER_TLS_VERIFY &&
+          echo $DOCKER_HOST &&
+          echo $DOCKER_CERT_PATH &&
+          echo $DOCKER_MACHINE_NAME
+      register: master
+
+    - set_fact:
+        dhost: "{{ master.stdout_lines[0] }}"
+        dcert: "{{ master.stdout_lines[1] }}"
+        dmach: "{{ master.stdout_lines[2] }}"
+
+    - name: Run the Swarmkit Master
+      docker:
+        name: swarmkit-master
+        image: "fsoppelsa/swarmkit"
+        command: swarmd --listen-remote-api 0.0.0.0:4242
+        expose:
+          - "4242"
+        ports:
+          - "0.0.0.0:4242:4242/tcp"
+        volumes:
+          - "/var/run/docker.sock:/var/run/docker.sock"
+        detach: yes
+        docker_url: "{{ dhost }}"
+        use_tls: encrypt
+        tls_ca_cert: "{{ dcert }}/ca.pem"
+        tls_client_cert: "{{ dcert }}/cert.pem"
+        tls_client_key: "{{ dcert }}/key.pem"
