@@ -19,8 +19,6 @@ Provision Swarmkit clusters with Machine.
 
 Where ***c0946f034c1e*** is the swarmkit container.
 
-5. Enjoy
-
 
 TODO
 ====
