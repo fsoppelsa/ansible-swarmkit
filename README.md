@@ -10,7 +10,7 @@ Provision Swarmkit clusters with Machine.
 
 3. Create any number of other Swarmkit nodes, i.e.:
 
-        for i in `seq 0 5`; do ansible-playbook aws_provision_master.yml; done
+        for i in `seq 0 5`; do ansible-playbook aws_provision_slave.yml; done
 
 4. Use `swarmctl` to ensure that nodes joined the cluster:
 
