@@ -3,10 +3,10 @@ ansible-swarmkit
 Automatically provision Swarmkit clusters with Machine.
 
 Prerequisites for AWS:
--* Set AWS access key and AWS secret access key in `~/.aws/credentials`
-- docker client 1.11.2
--* docker-machine
--* docker-py (install it via pip if required)
+* Access key and secret access key in `~/.aws/credentials`
+* docker client 1.11.2
+* docker-machine
+* docker-py (install it via pip if required)
 
 1. Source your EC2 credentials (<a href="https://github.com/docker/machine/blob/master/docs/drivers/aws.md">see here</a>)
 
